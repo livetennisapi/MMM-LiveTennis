@@ -1,0 +1,14 @@
+{
+  "LOADING": "Live-uitslagen laden…",
+  "NO_MATCHES": "Geen wedstrijden bezig",
+  "UPCOMING": "Binnenkort",
+  "SERVING": "Aan service",
+  "UNKNOWN_PLAYER": "Onbekende speler",
+  "STALE": "verouderd",
+  "UPDATED": "Bijgewerkt {time}",
+  "ERROR_NO_KEY": "Geen Live Tennis API-sleutel ingesteld",
+  "ERROR_AUTH": "Live Tennis API-sleutel geweigerd",
+  "ERROR_RATE_LIMIT": "Daglimiet van de Live Tennis API bereikt",
+  "ERROR_NETWORK": "Live Tennis API niet bereikbaar",
+  "ERROR_GENERIC": "Live-uitslagen niet beschikbaar"
+}

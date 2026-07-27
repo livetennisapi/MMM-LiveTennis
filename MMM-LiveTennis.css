@@ -1,0 +1,100 @@
+/* MagicMirror² Module: MMM-LiveTennis
+ * MIT Licensed.
+ */
+
+.mmm-livetennis {
+  line-height: 1.25;
+}
+
+.mmm-livetennis-hidden {
+  display: none;
+}
+
+.mmm-livetennis-table {
+  border-spacing: 0;
+  border-collapse: separate;
+  width: 100%;
+}
+
+.mmm-livetennis-table td {
+  padding: 0 4px;
+  vertical-align: middle;
+}
+
+/* --- captions and section headers ------------------------------------ */
+
+.mmm-livetennis-caption td {
+  padding-top: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mmm-livetennis-section td {
+  padding-top: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-top: 1px solid rgb(255 255 255 / 15%);
+}
+
+/* --- player rows ------------------------------------------------------ */
+
+.mmm-livetennis-serve {
+  width: 12px;
+  padding-right: 0;
+  text-align: center;
+}
+
+.mmm-livetennis-serving {
+  font-size: 6px;
+  vertical-align: middle;
+  color: #fff;
+}
+
+.mmm-livetennis-name {
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 190px;
+}
+
+.mmm-livetennis-seed {
+  font-size: 85%;
+}
+
+.mmm-livetennis-set {
+  width: 18px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.mmm-livetennis-points {
+  width: 26px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.mmm-livetennis-spacer td {
+  height: 6px;
+  padding: 0;
+}
+
+/* --- states ----------------------------------------------------------- */
+
+.mmm-livetennis-error {
+  padding-top: 2px;
+}
+
+.mmm-livetennis-inline-error {
+  border-top: 1px solid rgb(255 255 255 / 15%);
+  margin-top: 4px;
+  padding-top: 4px;
+}
+
+.mmm-livetennis-footer {
+  padding-top: 4px;
+  text-align: right;
+}

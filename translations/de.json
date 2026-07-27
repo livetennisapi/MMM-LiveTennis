@@ -1,0 +1,14 @@
+{
+  "LOADING": "Live-Ergebnisse werden geladen…",
+  "NO_MATCHES": "Keine laufenden Spiele",
+  "UPCOMING": "Demnächst",
+  "SERVING": "Aufschlag",
+  "UNKNOWN_PLAYER": "Unbekannter Spieler",
+  "STALE": "veraltet",
+  "UPDATED": "Aktualisiert {time}",
+  "ERROR_NO_KEY": "Kein Live-Tennis-API-Schlüssel konfiguriert",
+  "ERROR_AUTH": "Live-Tennis-API-Schlüssel abgelehnt",
+  "ERROR_RATE_LIMIT": "Tageslimit der Live-Tennis-API erreicht",
+  "ERROR_NETWORK": "Live-Tennis-API nicht erreichbar",
+  "ERROR_GENERIC": "Live-Ergebnisse nicht verfügbar"
+}

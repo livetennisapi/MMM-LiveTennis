@@ -1,0 +1,14 @@
+{
+  "LOADING": "Cargando resultados en directo…",
+  "NO_MATCHES": "No hay partidos en juego",
+  "UPCOMING": "Próximos",
+  "SERVING": "Al saque",
+  "UNKNOWN_PLAYER": "Jugador desconocido",
+  "STALE": "desactualizado",
+  "UPDATED": "Actualizado {time}",
+  "ERROR_NO_KEY": "No hay clave de API de Live Tennis configurada",
+  "ERROR_AUTH": "Clave de API de Live Tennis rechazada",
+  "ERROR_RATE_LIMIT": "Límite diario de la API de Live Tennis alcanzado",
+  "ERROR_NETWORK": "No se puede conectar con la API de Live Tennis",
+  "ERROR_GENERIC": "Resultados en directo no disponibles"
+}

@@ -1,0 +1,14 @@
+{
+  "LOADING": "Chargement des scores en direct…",
+  "NO_MATCHES": "Aucun match en cours",
+  "UPCOMING": "À venir",
+  "SERVING": "Au service",
+  "UNKNOWN_PLAYER": "Joueur inconnu",
+  "STALE": "obsolète",
+  "UPDATED": "Mis à jour {time}",
+  "ERROR_NO_KEY": "Aucune clé API Live Tennis configurée",
+  "ERROR_AUTH": "Clé API Live Tennis refusée",
+  "ERROR_RATE_LIMIT": "Limite quotidienne de l'API Live Tennis atteinte",
+  "ERROR_NETWORK": "API Live Tennis injoignable",
+  "ERROR_GENERIC": "Scores en direct indisponibles"
+}

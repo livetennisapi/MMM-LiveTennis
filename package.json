@@ -1,0 +1,45 @@
+{
+  "name": "mmm-livetennis",
+  "version": "1.0.0",
+  "description": "MagicMirror² module showing live ATP/WTA tennis scores — sets, games, current points and the serving player — powered by the Live Tennis API.",
+  "main": "MMM-LiveTennis.js",
+  "type": "commonjs",
+  "keywords": [
+    "MagicMirror",
+    "MagicMirror2",
+    "magicmirror-module",
+    "tennis",
+    "live scores",
+    "ATP",
+    "WTA",
+    "sports"
+  ],
+  "homepage": "https://github.com/livetennisapi/MMM-LiveTennis#readme",
+  "bugs": {
+    "url": "https://github.com/livetennisapi/MMM-LiveTennis/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/livetennisapi/MMM-LiveTennis.git"
+  },
+  "license": "MIT",
+  "author": "Live Tennis API <hello@livetennisapi.com> (https://livetennisapi.com)",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "lint": "eslint",
+    "lint:fix": "eslint --fix",
+    "mock": "node tests/mock-api.js 8099",
+    "test": "node --run test:syntax && node --run lint && node --run test:unit",
+    "test:syntax": "node --check MMM-LiveTennis.js && node --check node_helper.js",
+    "test:unit": "node --test tests/node_helper.test.js"
+  },
+  "devDependencies": {
+    "@eslint/css": "^0.10.0",
+    "@eslint/js": "^9.34.0",
+    "@stylistic/eslint-plugin": "^5.2.3",
+    "eslint": "^9.34.0",
+    "globals": "^16.3.0"
+  }
+}

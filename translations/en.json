@@ -1,0 +1,14 @@
+{
+  "LOADING": "Loading live scores…",
+  "NO_MATCHES": "No matches in play",
+  "UPCOMING": "Upcoming",
+  "SERVING": "Serving",
+  "UNKNOWN_PLAYER": "Unknown player",
+  "STALE": "stale",
+  "UPDATED": "Updated {time}",
+  "ERROR_NO_KEY": "No Live Tennis API key configured",
+  "ERROR_AUTH": "Live Tennis API key rejected",
+  "ERROR_RATE_LIMIT": "Live Tennis API daily limit reached",
+  "ERROR_NETWORK": "Cannot reach the Live Tennis API",
+  "ERROR_GENERIC": "Live tennis scores unavailable"
+}
