@@ -1,0 +1,31 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+      # The unit tests load the real MagicMirror² core (node_helper, logger),
+      # exactly as the module runs in production, via MM_ROOT.
+      - name: Check out MagicMirror² core
+        run: |
+          git clone --depth 1 https://github.com/MagicMirrorOrg/MagicMirror /tmp/MagicMirror
+          cd /tmp/MagicMirror && npm install --omit=dev --no-audit --no-fund
+      - run: npm ci
+      # syntax check + eslint + node:test unit suite, against an in-process
+      # mock API — no network, no credential.
+      - run: npm test
+        env:
+          MM_ROOT: /tmp/MagicMirror
