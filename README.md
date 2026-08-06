@@ -19,7 +19,7 @@ Live ATP/WTA tennis scores for [MagicMirror²](https://magicmirror.builders) —
 
 - MagicMirror² `>= 2.30.0`
 - Node.js `>= 20`
-- A Live Tennis API key — [**get a free one**](https://livetennisapi.com/subscribe/free) (1,000 requests/day)
+- A Live Tennis API key — [**get a free one**](https://livetennisapi.com/subscribe/free) (100 requests/day)
 
 ## Installation
 
@@ -127,14 +127,14 @@ This is the classic MagicMirror² convention and it works. Be aware that MagicMi
 | `showServingIndicator` | `true` | `true`, `false` | _Optional_ - Show a dot next to the player currently serving. |
 | `showFooter` | `true` | `true`, `false` | _Optional_ - Show an "Updated hh:mm" line under the table. |
 | `hideWhenEmpty` | `false` | `true`, `false` | _Optional_ - Render nothing at all when there are no matches, instead of the "No matches in play" message. |
-| `updateInterval` | `60000` | integer, ms | _Optional_ - How often to poll. Values below `30000` are raised to `30000` to protect your quota. |
+| `updateInterval` | `1800000` | integer, ms | _Optional_ - How often to poll. The 30-minute default keeps a free key inside its daily quota; values below `30000` are raised to `30000` to protect your quota. |
 | `retryDelay` | `30000` | integer, ms | _Optional_ - How long to wait before retrying after a failed poll. Minimum `5000`. |
 | `animationSpeed` | `1000` | integer, ms | _Optional_ - DOM update animation duration. |
 | `tableClass` | `"small"` | `"xsmall"`, `"small"`, `"medium"`, `"large"` | _Optional_ - MagicMirror² text size class for the table. |
 
 ### A note on your quota
 
-A free key allows 1,000 requests/day. With `showUpcoming: true` each poll costs **2** requests. The default 60s interval therefore uses roughly `2 × 1440 = 2880` requests/day — more than the free tier. For a free key, either set `showUpcoming: false` (1,440/day) or raise `updateInterval` to `180000` (960/day with upcoming). The module never polls faster than every 30 seconds.
+A free key allows 100 requests/day. With `showUpcoming: true` (the default) each poll costs **2** requests, so the default 30-minute interval uses `2 × 48 = 96` requests/day — inside the free tier, with almost no headroom. On a free key you can go as fast as 15 minutes (`updateInterval: 900000`) only with `showUpcoming: false` (96/day); anything faster blows the daily cap. For a livelier mirror, the Basic tier ($9.99, 1,000 requests/day) sustains 3-minute polling with upcoming (`updateInterval: 180000`, 960/day) or 90-second polling without it. The module never polls faster than every 30 seconds.
 
 ## Rendering states
 
@@ -192,7 +192,7 @@ The mock also serves `/s/empty/…`, `/s/slow/…`, `/s/badkey/…`, `/s/ratelim
 
 ## Disclosure
 
-- **Vendor-authored.** This module is written and maintained by the Live Tennis API team, the operator of the commercial API it consumes. We have an obvious interest in you using our API. The module is MIT licensed, contains no telemetry, and talks to no host other than the `apiBase` you configure. A free tier (1,000 requests/day) is available and is enough to run this module continuously with the settings suggested above.
+- **Vendor-authored.** This module is written and maintained by the Live Tennis API team, the operator of the commercial API it consumes. We have an obvious interest in you using our API. The module is MIT licensed, contains no telemetry, and talks to no host other than the `apiBase` you configure. A free tier (100 requests/day) is available and is enough to run this module continuously at the default settings; faster refresh rates need a paid tier as described above.
 - **AI-assisted.** This module was written with AI assistance (Anthropic Claude). It was verified end to end before release against a local mock of the API in a real MagicMirror² v2.37.0 install: every render state was checked in a headless browser, the unit suite passes, and the client-side state was audited to confirm the API key does not leak into the page. It has **not** yet been run against a live tournament feed with a production key — please open an issue if you hit a data shape this module renders badly.
 
 ## License

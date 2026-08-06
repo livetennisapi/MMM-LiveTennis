@@ -97,7 +97,7 @@ module.exports = NodeHelper.create({
 			maximumEntries: this.toPositiveInt(raw.maximumEntries, 5),
 			upcomingEntries: this.toPositiveInt(raw.upcomingEntries, 3),
 			showUpcoming: raw.showUpcoming !== false,
-			updateInterval: Math.max(MIN_UPDATE_INTERVAL, this.toPositiveInt(raw.updateInterval, 60000)),
+			updateInterval: Math.max(MIN_UPDATE_INTERVAL, this.toPositiveInt(raw.updateInterval, 1800000)),
 			retryDelay: Math.max(5000, this.toPositiveInt(raw.retryDelay, 30000))
 		};
 	},
