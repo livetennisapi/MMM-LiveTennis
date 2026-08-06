@@ -45,7 +45,7 @@ Module.register("MMM-LiveTennis", {
 		hideWhenEmpty: false, // hide the whole module when nothing to show
 
 		// --- Timing ------------------------------------------------------
-		updateInterval: 60 * 1000, // poll cadence, ms (min enforced: 30s)
+		updateInterval: 30 * 60 * 1000, // poll cadence, ms (min enforced: 30s). 30 min keeps the default config (2 req/poll with showUpcoming) at 96 req/day, inside the free tier's 100/day; faster polling needs the Basic tier.
 		retryDelay: 30 * 1000, // backoff after a failed poll, ms
 		animationSpeed: 1000, // updateDom animation, ms
 
