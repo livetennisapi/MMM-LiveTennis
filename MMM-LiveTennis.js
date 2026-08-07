@@ -1,8 +1,8 @@
 /* MagicMirror²
  * Module: MMM-LiveTennis
  *
- * Live ATP/WTA tennis scores powered by the Live Tennis API
- * (https://livetennisapi.com).
+ * Live tennis scores — ATP, WTA, Challenger, ITF and juniors — powered by
+ * the Live Tennis API (https://livetennisapi.com).
  *
  * By the Live Tennis API team
  * MIT Licensed.
@@ -33,7 +33,7 @@ Module.register("MMM-LiveTennis", {
 		apiBase: "https://api.livetennisapi.com/api/public/v1",
 
 		// --- What to show ------------------------------------------------
-		tour: "", // "" = all tours, or e.g. "ATP" / "WTA"
+		tour: "", // "" = all tours, or "atp" / "wta" / "challenger" / "itf" / "juniors" (any case)
 		maximumEntries: 5, // max live matches rendered
 		showUpcoming: true, // append upcoming matches when < maximumEntries live
 		upcomingEntries: 3, // max upcoming matches rendered
@@ -151,7 +151,9 @@ Module.register("MMM-LiveTennis", {
 				this.failureCount += 1;
 				this.error = {
 					kind: payload && payload.kind ? payload.kind : "UNKNOWN",
-					status: payload && payload.status ? payload.status : null
+					status: payload && payload.status ? payload.status : null,
+					// Set for ABUSE_THROTTLED: when (epoch ms) polling resumes.
+					retryAt: payload && payload.retryAt ? payload.retryAt : null
 				};
 				this.loaded = true;
 				this.updateDom(this.config.animationSpeed);
@@ -383,6 +385,15 @@ Module.register("MMM-LiveTennis", {
 	buildErrorNode () {
 		const node = document.createElement("div");
 		node.className = "mmm-livetennis-error dimmed light xsmall";
+
+		if (this.error && this.error.kind === "ABUSE_THROTTLED") {
+			// The API paused this key; say so, with the resume time when known.
+			const time = this.error.retryAt ? this.formatTime(this.error.retryAt) : "";
+			node.textContent = time
+				? this.translate("ERROR_ABUSE_UNTIL", { time })
+				: this.translate("ERROR_ABUSE");
+			return node;
+		}
 
 		let key = "ERROR_GENERIC";
 		if (this.error) {

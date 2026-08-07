@@ -10,5 +10,7 @@
   "ERROR_AUTH": "Clave de API de Live Tennis rechazada",
   "ERROR_RATE_LIMIT": "Límite diario de la API de Live Tennis alcanzado",
   "ERROR_NETWORK": "No se puede conectar con la API de Live Tennis",
-  "ERROR_GENERIC": "Resultados en directo no disponibles"
+  "ERROR_GENERIC": "Resultados en directo no disponibles",
+  "ERROR_ABUSE": "Clave de API de Live Tennis en pausa (demasiadas solicitudes)",
+  "ERROR_ABUSE_UNTIL": "Clave de API de Live Tennis en pausa hasta {time}"
 }
