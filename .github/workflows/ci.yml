@@ -14,6 +14,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      # Product-truth pin: quota figures and canonical URLs must stay current.
+      - name: truthcheck
+        run: sh scripts/truthcheck.sh
       - uses: actions/setup-node@v7
         with:
           node-version: '22'
