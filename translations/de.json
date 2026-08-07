@@ -10,5 +10,7 @@
   "ERROR_AUTH": "Live-Tennis-API-Schlüssel abgelehnt",
   "ERROR_RATE_LIMIT": "Tageslimit der Live-Tennis-API erreicht",
   "ERROR_NETWORK": "Live-Tennis-API nicht erreichbar",
-  "ERROR_GENERIC": "Live-Ergebnisse nicht verfügbar"
+  "ERROR_GENERIC": "Live-Ergebnisse nicht verfügbar",
+  "ERROR_ABUSE": "Live-Tennis-API-Schlüssel pausiert (zu viele Anfragen)",
+  "ERROR_ABUSE_UNTIL": "Live-Tennis-API-Schlüssel pausiert bis {time}"
 }

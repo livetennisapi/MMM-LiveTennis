@@ -10,5 +10,7 @@
   "ERROR_AUTH": "Live Tennis API-sleutel geweigerd",
   "ERROR_RATE_LIMIT": "Daglimiet van de Live Tennis API bereikt",
   "ERROR_NETWORK": "Live Tennis API niet bereikbaar",
-  "ERROR_GENERIC": "Live-uitslagen niet beschikbaar"
+  "ERROR_GENERIC": "Live-uitslagen niet beschikbaar",
+  "ERROR_ABUSE": "Live Tennis API-sleutel gepauzeerd (te veel verzoeken)",
+  "ERROR_ABUSE_UNTIL": "Live Tennis API-sleutel gepauzeerd tot {time}"
 }

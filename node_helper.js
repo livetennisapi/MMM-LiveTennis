@@ -16,6 +16,17 @@ const MIN_UPDATE_INTERVAL = 30 * 1000;
 const REQUEST_TIMEOUT = 15 * 1000;
 const SECRET_PLACEHOLDER = /^\*\*SECRET_[^*]+\*\*$/;
 
+/*
+ * Backoff bounds for the API's `abuse_throttled` 429. That response means the
+ * key is blocked (typically for 24 hours) for chronically polling over its
+ * cap; the body carries `retry_at_epoch`. Hammering on `retryDelay` would
+ * only extend the block, so polling pauses until that instant instead.
+ */
+const ABUSE_RETRY_BUFFER = 5 * 1000;
+const ABUSE_MIN_BACKOFF = 60 * 1000;
+const ABUSE_MAX_BACKOFF = 24 * 60 * 60 * 1000;
+const ABUSE_DEFAULT_BACKOFF = 60 * 60 * 1000;
+
 module.exports = NodeHelper.create({
 
 	/**
@@ -93,7 +104,10 @@ module.exports = NodeHelper.create({
 		const raw = rawConfig || {};
 		return {
 			apiBase: String(raw.apiBase || "https://api.livetennisapi.com/api/public/v1").replace(/\/+$/, ""),
-			tour: raw.tour ? String(raw.tour) : "",
+			// The API's tour enum is lowercase (atp, wta, challenger, itf,
+			// juniors) and rejects unknown values with a 400 — normalise case
+			// here so "ATP" keeps working.
+			tour: raw.tour ? String(raw.tour).trim().toLowerCase() : "",
 			maximumEntries: this.toPositiveInt(raw.maximumEntries, 5),
 			upcomingEntries: this.toPositiveInt(raw.upcomingEntries, 3),
 			showUpcoming: raw.showUpcoming !== false,
@@ -216,16 +230,48 @@ module.exports = NodeHelper.create({
 
 			this.scheduleNext(instanceId, config.updateInterval);
 		} catch (error) {
-			Log.error(`${this.name} [${instanceId}]: ${error.message}`);
+			let delay = config.retryDelay;
+			let retryAt = null;
+
+			if (error.kind === "ABUSE_THROTTLED") {
+				/*
+				 * The API has blocked this key for chronically polling over its
+				 * cap. Do NOT retry on retryDelay — that is exactly the
+				 * behaviour being punished. Pause until the API's retry_at.
+				 */
+				delay = this.abuseBackoffDelay(error.retryAtEpoch, Date.now());
+				retryAt = Date.now() + delay;
+				Log.error(`${this.name} [${instanceId}]: the API throttled this key (429 abuse_throttled). Pausing all polling until ${new Date(retryAt).toISOString()}. If this recurs, another client or a retry loop is probably hammering the same key — this module itself never polls faster than every 30 s.`);
+			} else {
+				Log.error(`${this.name} [${instanceId}]: ${error.message}`);
+			}
+
 			this.sendSocketNotification("LIVETENNIS_ERROR", {
 				instanceId,
 				kind: error.kind || "UNKNOWN",
-				status: error.status || null
+				status: error.status || null,
+				retryAt
 			});
-			this.scheduleNext(instanceId, config.retryDelay);
+			this.scheduleNext(instanceId, delay);
 		} finally {
 			instance.fetching = false;
 		}
+	},
+
+	/**
+	 * How long to pause after an `abuse_throttled` 429, in milliseconds.
+	 * @param {number|string|undefined} retryAtEpoch The body's `retry_at_epoch`
+	 *   (epoch seconds; epoch milliseconds are tolerated defensively).
+	 * @param {number} nowMs Current time in epoch milliseconds.
+	 * @returns {number} A delay clamped to [1 minute, 24 hours]; one hour when
+	 *   the field is missing or unusable.
+	 */
+	abuseBackoffDelay (retryAtEpoch, nowMs) {
+		const raw = Number(retryAtEpoch);
+		if (!Number.isFinite(raw) || raw <= 0) return ABUSE_DEFAULT_BACKOFF;
+		const retryAtMs = raw < 1e12 ? raw * 1000 : raw;
+		const delay = retryAtMs - nowMs + ABUSE_RETRY_BUFFER;
+		return Math.min(Math.max(delay, ABUSE_MIN_BACKOFF), ABUSE_MAX_BACKOFF);
 	},
 
 	/**
@@ -247,8 +293,9 @@ module.exports = NodeHelper.create({
 		try {
 			response = await fetch(url, {
 				headers: {
-					// The one and only place the credential is used.
-					"x-api-key": instance.apiKey,
+					// The one and only place the credential is used. Bearer is
+					// the API's preferred scheme (X-API-Key also works).
+					authorization: `Bearer ${instance.apiKey}`,
 					accept: "application/json",
 					"user-agent": "MMM-LiveTennis (MagicMirror module)"
 				},
@@ -259,17 +306,18 @@ module.exports = NodeHelper.create({
 		}
 
 		if (!response.ok) {
-			let kind = "HTTP";
-			if (response.status === 401 || response.status === 403) kind = "AUTH";
-			else if (response.status === 429) kind = "RATE_LIMIT";
-
-			let detail = "";
+			let body = null;
 			try {
-				const body = await response.json();
-				if (body && body.error) detail = ` (${body.error})`;
+				body = await response.json();
 			} catch {
 				// non-JSON error body; the status code is enough
 			}
+			const apiError = body && typeof body.error === "string" ? body.error : "";
+			const detail = apiError ? ` (${apiError})` : "";
+
+			let kind = "HTTP";
+			if (response.status === 401 || response.status === 403) kind = "AUTH";
+			else if (response.status === 429) kind = apiError === "abuse_throttled" ? "ABUSE_THROTTLED" : "RATE_LIMIT";
 
 			if (kind === "AUTH") {
 				Log.error(`${this.name}: the Live Tennis API rejected the API key${detail}. Check LIVETENNIS_API_KEY or the apiKey option; free keys: https://livetennisapi.com/subscribe/free`);
@@ -277,6 +325,9 @@ module.exports = NodeHelper.create({
 
 			const error = this.tagError(new Error(`HTTP ${response.status} from ${path}${detail}`), kind);
 			error.status = response.status;
+			if (kind === "ABUSE_THROTTLED" && body && body.retry_at_epoch !== undefined) {
+				error.retryAtEpoch = body.retry_at_epoch;
+			}
 			throw error;
 		}
 
@@ -287,7 +338,7 @@ module.exports = NodeHelper.create({
 	/**
 	 * Attach an error classification used by the front-end to pick a message.
 	 * @param {Error} error The error to tag.
-	 * @param {string} kind One of NETWORK, AUTH, RATE_LIMIT, HTTP.
+	 * @param {string} kind One of NETWORK, AUTH, RATE_LIMIT, ABUSE_THROTTLED, HTTP.
 	 * @returns {Error} The same error, tagged.
 	 */
 	tagError (error, kind) {

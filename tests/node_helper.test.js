@@ -70,6 +70,13 @@ test("sanitiseConfig enforces a 30s minimum poll interval", () => {
 	assert.strictEqual(helper.sanitiseConfig({ updateInterval: 90000 }).updateInterval, 90000);
 });
 
+test("sanitiseConfig lowercases the tour filter to match the API enum", () => {
+	const { helper } = makeHelper();
+	assert.strictEqual(helper.sanitiseConfig({ tour: "ATP" }).tour, "atp");
+	assert.strictEqual(helper.sanitiseConfig({ tour: " Challenger " }).tour, "challenger");
+	assert.strictEqual(helper.sanitiseConfig({}).tour, "");
+});
+
 test("sanitiseConfig never carries the credential", () => {
 	const { helper } = makeHelper();
 	const cfg = helper.sanitiseConfig({ apiKey: "super-secret" });
@@ -176,13 +183,13 @@ test("extractList handles every documented envelope", () => {
 // network behaviour (against the in-process mock)
 // ---------------------------------------------------------------------------
 
-test("request sends the x-api-key header and the documented query params", async () => {
+test("request authenticates with a Bearer Authorization header and the documented query params", async () => {
 	const { helper } = makeHelper();
 	const instance = {
 		apiKey: "mock-test-key-not-real",
 		config: { apiBase: `${MOCK}/s/ok/api/public/v1` }
 	};
-	const list = await helper.request(instance, "/matches", { status: "live", tour: "ATP", limit: 2 });
+	const list = await helper.request(instance, "/matches", { status: "live", tour: "atp", limit: 2 });
 	assert.strictEqual(Array.isArray(list), true);
 	assert.strictEqual(list.length, 2);
 	assert.strictEqual(list[0].tournament, "Wimbledon");
@@ -223,6 +230,66 @@ test("HTTP error codes map to the right error kinds", async () => {
 			}
 		);
 	}
+});
+
+test("an abuse_throttled 429 gets its own kind and carries retry_at_epoch", async () => {
+	const { helper } = makeHelper();
+	const instance = {
+		apiKey: "mock-test-key-not-real",
+		config: { apiBase: `${MOCK}/s/abuse/api/public/v1` }
+	};
+	await assert.rejects(
+		() => helper.request(instance, "/matches", {}),
+		(error) => {
+			assert.strictEqual(error.kind, "ABUSE_THROTTLED");
+			assert.strictEqual(error.status, 429);
+			assert.strictEqual(typeof error.retryAtEpoch, "number");
+			assert.ok(error.retryAtEpoch > Date.now() / 1000, "retry_at_epoch is in the future");
+			return true;
+		}
+	);
+});
+
+test("abuseBackoffDelay honours retry_at_epoch and clamps to sane bounds", () => {
+	const { helper } = makeHelper();
+	const now = 1754500000000; // epoch ms
+	// epoch seconds one hour ahead -> one hour + the safety buffer
+	assert.strictEqual(helper.abuseBackoffDelay(now / 1000 + 3600, now), 3600 * 1000 + 5000);
+	// retry instant already in the past -> the minimum, never a hammer loop
+	assert.strictEqual(helper.abuseBackoffDelay(now / 1000 - 60, now), 60 * 1000);
+	// missing or garbage -> a long default, not a fast retry
+	assert.strictEqual(helper.abuseBackoffDelay(undefined, now), 60 * 60 * 1000);
+	assert.strictEqual(helper.abuseBackoffDelay("nope", now), 60 * 60 * 1000);
+	// epoch milliseconds tolerated
+	assert.strictEqual(helper.abuseBackoffDelay(now + 600000, now), 600000 + 5000);
+	// never longer than 24 hours
+	assert.strictEqual(helper.abuseBackoffDelay(now / 1000 + 999999999, now), 24 * 3600 * 1000);
+});
+
+test("an abuse_throttled poll reports ABUSE_THROTTLED and schedules a long pause", async () => {
+	const { helper, sent } = makeHelper();
+	helper.socketNotificationReceived("LIVETENNIS_CONFIG", {
+		instanceId: "module_5_MMM-LiveTennis",
+		config: {
+			apiKey: "mock-test-key-not-real",
+			apiBase: `${MOCK}/s/abuse/api/public/v1`,
+			showUpcoming: false,
+			retryDelay: 5000
+		}
+	});
+
+	await new Promise((resolve) => setTimeout(resolve, 1000));
+
+	const err = sent.find((s) => s.notification === "LIVETENNIS_ERROR");
+	assert.ok(err, "an error notification was sent");
+	assert.strictEqual(err.payload.kind, "ABUSE_THROTTLED");
+	assert.strictEqual(err.payload.status, 429);
+	// The pause must follow retry_at_epoch (~1 h), not the 5 s retryDelay.
+	assert.ok(err.payload.retryAt > Date.now() + 30 * 60 * 1000, "backoff is far in the future");
+
+	const instance = helper.instances.get("module_5_MMM-LiveTennis");
+	assert.ok(instance.timer, "a resume poll is scheduled (paused, not dead)");
+	helper.stop();
 });
 
 test("an unreachable host yields kind NETWORK", async () => {

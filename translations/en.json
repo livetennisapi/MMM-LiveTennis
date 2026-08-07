@@ -10,5 +10,7 @@
   "ERROR_AUTH": "Live Tennis API key rejected",
   "ERROR_RATE_LIMIT": "Live Tennis API daily limit reached",
   "ERROR_NETWORK": "Cannot reach the Live Tennis API",
-  "ERROR_GENERIC": "Live tennis scores unavailable"
+  "ERROR_GENERIC": "Live tennis scores unavailable",
+  "ERROR_ABUSE": "Live Tennis API key paused (too many requests)",
+  "ERROR_ABUSE_UNTIL": "Live Tennis API key paused until {time}"
 }

@@ -10,5 +10,7 @@
   "ERROR_AUTH": "Clé API Live Tennis refusée",
   "ERROR_RATE_LIMIT": "Limite quotidienne de l'API Live Tennis atteinte",
   "ERROR_NETWORK": "API Live Tennis injoignable",
-  "ERROR_GENERIC": "Scores en direct indisponibles"
+  "ERROR_GENERIC": "Scores en direct indisponibles",
+  "ERROR_ABUSE": "Clé API Live Tennis suspendue (trop de requêtes)",
+  "ERROR_ABUSE_UNTIL": "Clé API Live Tennis suspendue jusqu'à {time}"
 }

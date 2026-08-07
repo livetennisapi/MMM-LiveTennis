@@ -9,7 +9,8 @@
  *
  * It mirrors the real surface:
  *   GET /api/public/v1/matches?status=live|upcoming|completed&tour=&limit=
- * and the real auth contract: a missing/blank `x-api-key` header returns
+ * and the real auth contract: `Authorization: Bearer <key>` (preferred) or an
+ * `x-api-key` header; a missing/blank credential returns
  *   401 {"error":"unauthorized"}
  *
  * Scenarios are selected by URL prefix so one process drives every case:
@@ -17,7 +18,8 @@
  *   /s/empty/...      valid response, zero matches
  *   /s/slow/...       never responds (holds the loading state)
  *   /s/badkey/...     always 401 unauthorized
- *   /s/ratelimit/...  always 429
+ *   /s/ratelimit/...  always 429 rate_limited
+ *   /s/abuse/...      always 429 abuse_throttled + retry_at_epoch (now + 1h)
  *   /s/boom/...       always 500
  *
  * No real credential is present or checked anywhere in this file.
@@ -114,10 +116,13 @@ function createMockServer (options = {}) {
 
 		const scenario = parts[1];
 		const endpoint = `/${parts.slice(5).join("/")}`;
-		const apiKey = req.headers["x-api-key"];
+		const authHeader = String(req.headers.authorization || "");
+		// "Bearer <key>" (an empty key collapses to bare "Bearer") or a raw key.
+		const bearer = (/^Bearer\b/i).test(authHeader) ? authHeader.replace(/^Bearer\s*/i, "") : authHeader;
+		const apiKey = req.headers["x-api-key"] || bearer;
 
 		if (!options.quiet) {
-			console.log(`[mock] ${req.method} ${url.pathname}${url.search} scenario=${scenario} x-api-key=${apiKey ? "present" : "ABSENT"}`);
+			console.log(`[mock] ${req.method} ${url.pathname}${url.search} scenario=${scenario} credential=${apiKey ? "present" : "ABSENT"}`);
 		}
 
 		// Real contract: keyless requests are rejected.
@@ -126,6 +131,12 @@ function createMockServer (options = {}) {
 		if (scenario === "slow") return; // never answers
 		if (scenario === "badkey") return json(res, 401, { error: "unauthorized" });
 		if (scenario === "ratelimit") return json(res, 429, { error: "rate_limit_exceeded" });
+		if (scenario === "abuse") {
+			return json(res, 429, {
+				error: "abuse_throttled",
+				retry_at_epoch: Math.floor(Date.now() / 1000) + 3600
+			});
+		}
 		if (scenario === "boom") return json(res, 500, { error: "internal_server_error" });
 
 		if (endpoint !== "/matches") return json(res, 404, { error: "not_found" });
