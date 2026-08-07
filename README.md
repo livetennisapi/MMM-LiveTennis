@@ -1,6 +1,9 @@
 # MMM-LiveTennis
 
-Live ATP/WTA tennis scores for [MagicMirror²](https://magicmirror.builders) — players, set scores, the current game, and who is serving — powered by the [Live Tennis API](https://livetennisapi.com).
+Live tennis scores from ATP, WTA, Challenger, ITF and juniors for [MagicMirror²](https://magicmirror.builders) — players, set scores, the current game, and who is serving — powered by the [Live Tennis API](https://livetennisapi.com).
+
+[![CI](https://github.com/livetennisapi/MMM-LiveTennis/actions/workflows/ci.yml/badge.svg)](https://github.com/livetennisapi/MMM-LiveTennis/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 ![MMM-LiveTennis screenshot](screenshot.png)
 
@@ -8,8 +11,9 @@ Live ATP/WTA tennis scores for [MagicMirror²](https://magicmirror.builders) —
 
 - Live matches with per-set game scores, the current game score (`0/15/30/40/AD`) and a serving indicator.
 - Optional **Upcoming** section with start times.
-- Filter by tour (ATP / WTA) and cap how many matches are shown.
-- Distinct **loading**, **empty**, and **error** states — including a specific message for a rejected key, an exhausted quota, and an unreachable API.
+- Filter by tour — ATP, WTA, Challenger, ITF or juniors — and cap how many matches are shown.
+- Distinct **loading**, **empty**, and **error** states — including a specific message for a rejected key, an exhausted quota, a throttled key, and an unreachable API.
+- Quota-aware polling: never faster than every 30 s, and if the API throttles the key (`abuse_throttled`) the module pauses until the API's `retry_at` instead of retrying.
 - Keeps the last good scoreboard on screen when a poll fails, marking the header stale rather than blanking the module.
 - **The API key is only ever handled server-side, in `node_helper.js`.** It is never rendered and, with either recommended setup below, never reaches the browser at all.
 - No runtime dependencies — uses Node's built-in `fetch`.
@@ -68,7 +72,7 @@ MagicMirror² serves your `config.js` to the browser. Anything you write literal
 Set `LIVETENNIS_API_KEY` in the environment MagicMirror² runs in, and leave `apiKey` out of `config.js` entirely. The key is read directly by `node_helper.js` and never appears in the config at all.
 
 ```bash
-export LIVETENNIS_API_KEY="your-key-here"
+export LIVETENNIS_API_KEY="twjp_your_key_here"
 ```
 
 With `pm2`, put it in your ecosystem file. With `systemd`, use `Environment=` or `EnvironmentFile=`.
@@ -78,7 +82,7 @@ With `pm2`, put it in your ecosystem file. With `systemd`, use `Environment=` or
 MagicMirror² 2.35+ can redact `SECRET_*` variables before the config is sent to the browser. Put the value in `config/config.env`:
 
 ```ini
-SECRET_LIVETENNIS_API_KEY=your-key-here
+SECRET_LIVETENNIS_API_KEY=twjp_your_key_here
 ```
 
 and reference it from `config/config.js`:
@@ -105,7 +109,7 @@ The browser receives the literal string `**SECRET_LIVETENNIS_API_KEY**`; MagicMi
 
 ```js
 config: {
-  apiKey: "your-key-here"
+  apiKey: "twjp_your_key_here"
 }
 ```
 
@@ -117,7 +121,7 @@ This is the classic MagicMirror² convention and it works. Be aware that MagicMi
 | --- | --- | --- | --- |
 | `apiKey` | `""` | string | _Optional_ - Your Live Tennis API key. Leave empty and set `LIVETENNIS_API_KEY` in the environment instead (see above). Also accepts a `${SECRET_*}` reference. |
 | `apiBase` | `"https://api.livetennisapi.com/api/public/v1"` | string | _Optional_ - API base URL. Only change this to point at a mock or a proxy. |
-| `tour` | `""` | `""`, `"ATP"`, `"WTA"` | _Optional_ - Restrict to one tour. Empty shows all tours. |
+| `tour` | `""` | `""`, `"atp"`, `"wta"`, `"challenger"`, `"itf"`, `"juniors"` | _Optional_ - Restrict to one tour (case-insensitive; the module lowercases the value). Empty shows all five tours. The API rejects unknown values with a 400. |
 | `maximumEntries` | `5` | integer > 0 | _Optional_ - Maximum number of live matches to render. |
 | `showUpcoming` | `true` | `true`, `false` | _Optional_ - Also show an "Upcoming" section below the live matches. |
 | `upcomingEntries` | `3` | integer > 0 | _Optional_ - Maximum number of upcoming matches to render. |
@@ -134,6 +138,15 @@ This is the classic MagicMirror² convention and it works. Be aware that MagicMi
 
 ### A note on your quota
 
+Live Tennis API tiers (2026 grid):
+
+| Tier | Requests/min | Requests/day | Price |
+| --- | --- | --- | --- |
+| FREE | 30 | 100 | $0 |
+| BASIC | 60 | 1,000 | $9.99/mo |
+| PRO | 300 | 10,000 | $29.99/mo |
+| ULTRA | 600 | 500,000 | $99.99/mo |
+
 A free key allows 100 requests/day. With `showUpcoming: true` (the default) each poll costs **2** requests, so the default 30-minute interval uses `2 × 48 = 96` requests/day — inside the free tier, with almost no headroom. On a free key you can go as fast as 15 minutes (`updateInterval: 900000`) only with `showUpcoming: false` (96/day); anything faster blows the daily cap. For a livelier mirror, the Basic tier ($9.99, 1,000 requests/day) sustains 3-minute polling with upcoming (`updateInterval: 180000`, 960/day) or 90-second polling without it. The module never polls faster than every 30 seconds.
 
 ## Rendering states
@@ -146,6 +159,7 @@ A free key allows 100 requests/day. With `showUpcoming: true` (the default) each
 | No key | No key could be resolved | "No Live Tennis API key configured" |
 | Auth error | API returned 401/403 | "Live Tennis API key rejected" |
 | Quota error | API returned 429 | "Live Tennis API daily limit reached" |
+| Throttled | API returned 429 `abuse_throttled` | "Live Tennis API key paused until hh:mm" — polling pauses until the API's `retry_at` |
 | Network error | API unreachable | "Cannot reach the Live Tennis API" |
 | Stale | A poll failed but old data exists | The old scoreboard, header marked `(stale)`, message below the table |
 
@@ -153,10 +167,16 @@ A free key allows 100 requests/day. With `showUpcoming: true` (the default) each
 
 This module only ever issues authenticated `GET` requests to:
 
-- `GET /matches?status=live&tour=&limit=` — the live scoreboard
-- `GET /matches?status=upcoming&tour=&limit=` — the upcoming section (only when `showUpcoming` is `true`)
+| Endpoint | Used for | Tier |
+| --- | --- | --- |
+| `GET /matches?status=live&tour=&limit=` | the live scoreboard | FREE |
+| `GET /matches?status=upcoming&tour=&limit=` | the upcoming section (only when `showUpcoming` is `true`) | FREE |
 
-Authentication is the `x-api-key` request header. Full API reference: <https://livetennisapi.com>.
+Everything the module calls is available on the FREE tier. (`status=completed` — which the module does not use — needs BASIC or higher.)
+
+### Authentication
+
+The module sends `Authorization: Bearer twjp_...`, the API's preferred scheme. The API also accepts an `X-API-Key` header, and `?token=` for header-less clients such as WebSockets — neither is used here. Full API reference: <https://docs.livetennisapi.com>.
 
 ## Development
 
@@ -178,13 +198,15 @@ config: {
 }
 ```
 
-The mock also serves `/s/empty/…`, `/s/slow/…`, `/s/badkey/…`, `/s/ratelimit/…` and `/s/boom/…` so you can see each error state.
+The mock also serves `/s/empty/…`, `/s/slow/…`, `/s/badkey/…`, `/s/ratelimit/…`, `/s/abuse/…` and `/s/boom/…` so you can see each error state.
 
 ## Troubleshooting
 
 **"No Live Tennis API key configured"** — the helper could not resolve a key. Check `LIVETENNIS_API_KEY` is exported in the environment MagicMirror² actually runs in (a key exported in your shell is not visible to a `systemd` or `pm2` service). If you used a `${SECRET_*}` reference, confirm `hideConfigSecrets: true` is set and `config/config.env` contains the variable.
 
-**"Live Tennis API key rejected"** — the API returned 401/403. Verify the key at <https://livetennisapi.com>.
+**"Live Tennis API key rejected"** — the API returned 401/403. Re-reveal and verify your key at <https://livetennisapi.com/account>.
+
+**"Live Tennis API key paused until …"** — the API returned `abuse_throttled`, a temporary block (typically 24 hours) applied to keys that keep polling far over their cap. The module stops polling until the API's retry time — that is correct behaviour, not a bug. Check that nothing else (another client, a script with a retry loop) is using the same key; this module itself never polls faster than every 30 seconds.
 
 **Nothing renders at all** — check `npm run config:check` in your MagicMirror² folder, and look for `MMM-LiveTennis` lines in the MagicMirror² log.
 
@@ -194,6 +216,14 @@ The mock also serves `/s/empty/…`, `/s/slow/…`, `/s/badkey/…`, `/s/ratelim
 
 - **Vendor-authored.** This module is written and maintained by the Live Tennis API team, the operator of the commercial API it consumes. We have an obvious interest in you using our API. The module is MIT licensed, contains no telemetry, and talks to no host other than the `apiBase` you configure. A free tier (100 requests/day) is available and is enough to run this module continuously at the default settings; faster refresh rates need a paid tier as described above.
 - **AI-assisted.** This module was written with AI assistance (Anthropic Claude). It was verified end to end before release against a local mock of the API in a real MagicMirror² v2.37.0 install: every render state was checked in a headless browser, the unit suite passes, and the client-side state was audited to confirm the API key does not leak into the page. It has **not** yet been run against a live tournament feed with a production key — please open an issue if you hit a data shape this module renders badly.
+
+## Links
+
+- API docs: <https://docs.livetennisapi.com>
+- Free API key: <https://livetennisapi.com/subscribe/free>
+- Upgrade: <https://livetennisapi.com/subscribe/upgrade>
+- Discord: <https://discord.gg/f8WUZHgDm6>
+- GitHub org: <https://github.com/livetennisapi>
 
 ## License
 
