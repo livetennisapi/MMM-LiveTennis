@@ -1,7 +1,7 @@
 {
   "name": "mmm-livetennis",
-  "version": "1.1.0",
-  "description": "MagicMirror² module showing live tennis scores from ATP, WTA, Challenger, ITF and juniors — sets, games, current points and the serving player — powered by the Live Tennis API.",
+  "version": "1.1.1",
+  "description": "MagicMirror\u00b2 module showing live tennis scores from ATP, WTA, Challenger, ITF and juniors \u2014 sets, games, current points and the serving player \u2014 powered by the Live Tennis API.",
   "main": "MMM-LiveTennis.js",
   "type": "commonjs",
   "keywords": [
