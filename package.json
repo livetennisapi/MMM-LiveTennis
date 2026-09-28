@@ -25,7 +25,11 @@
     "url": "git+https://github.com/livetennisapi/MMM-LiveTennis.git"
   },
   "license": "MIT",
-  "author": "Live Tennis API <hello@livetennisapi.com> (https://livetennisapi.com)",
+  "author": {
+    "name": "Synapse Research Ltd",
+    "email": "hello@livetennisapi.com",
+    "url": "https://synapsereality.io"
+  },
   "engines": {
     "node": ">=20"
   },
