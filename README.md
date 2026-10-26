@@ -215,7 +215,7 @@ The mock also serves `/s/empty/…`, `/s/slow/…`, `/s/badkey/…`, `/s/ratelim
 ## Disclosure
 
 - **Vendor-authored.** This module is written and maintained by the Live Tennis API team, the operator of the commercial API it consumes. We have an obvious interest in you using our API. The module is MIT licensed, contains no telemetry, and talks to no host other than the `apiBase` you configure. A free tier (100 requests/day) is available and is enough to run this module continuously at the default settings; faster refresh rates need a paid tier as described above.
-- **AI-assisted.** This module was written with AI assistance (Anthropic Claude). It was verified end to end before release against a local mock of the API in a real MagicMirror² v2.37.0 install: every render state was checked in a headless browser, the unit suite passes, and the client-side state was audited to confirm the API key does not leak into the page. It has **not** yet been run against a live tournament feed with a production key — please open an issue if you hit a data shape this module renders badly.
+- **AI-assisted.** This module was written with AI assistance. It was verified end to end before release against a local mock of the API in a real MagicMirror² v2.37.0 install: every render state was checked in a headless browser, the unit suite passes, and the client-side state was audited to confirm the API key does not leak into the page. It has **not** yet been run against a live tournament feed with a production key — please open an issue if you hit a data shape this module renders badly.
 
 ## Links
 
